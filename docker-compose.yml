@@ -5,20 +5,68 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: sentiment-space-backend
     ports:
       - "8000:8000"
     environment:
+      # FastAPI Settings
       - FASTAPI_ENV=development
       - FASTAPI_DEBUG=true
+      - FASTAPI_HOST=0.0.0.0
+      - FASTAPI_PORT=8000
+
+      # Database
       - DB_PATH=/app/data/sentiment.db
+
+      # LLM Configuration - CPU optimized
+      - LLM_MODEL_NAME=meta-llama/Llama-2-7b-hf
+      - LLM_QUANTIZATION=int4
       - LLM_DEVICE=cpu
+      - LLM_MAX_NEW_TOKENS=256
+      - LLM_TEMPERATURE=0.7
+
+      # S3 Export - Disabled by default for privacy
+      - S3_ENABLED=false
+      # Uncomment and set these to enable S3:
+      # - AWS_ACCESS_KEY_ID=your_key
+      # - AWS_SECRET_ACCESS_KEY=your_secret
+
+      # Logging
+      - LOG_LATENCY=true
       - LOG_LEVEL=INFO
+
     volumes:
+      # Mount backend code for hot reload during development
       - ./backend:/app
+      # Persist SQLite database and logs
       - ./data:/app/data
+      - ./logs:/app/logs
+
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+    # Only restart on failure, useful during development
+    restart: unless-stopped
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
     networks:
       - sentiment-space
+
+    # Resource limits (adjust based on your machine)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
 
 networks:
   sentiment-space:
@@ -26,3 +74,4 @@ networks:
 
 volumes:
   data:
+  logs:
