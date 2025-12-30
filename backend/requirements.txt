@@ -1,0 +1,22 @@
+# FastAPI and Web Server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# LLM and ML
+transformers==4.36.0
+torch==2.1.2
+langchain==0.1.5
+huggingface-hub==0.19.4
+
+# AWS S3 Support (Optional)
+boto3==1.29.7
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Development
+pytest==7.4.3
+black==23.12.0
+flake8==6.1.0
