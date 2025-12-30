@@ -156,10 +156,12 @@ async def export_to_s3(thought_ids: Optional[List[int]] = None):
     """
     Export thoughts to AWS S3 (optional feature).
 
-    This requires:
+    This is COMPLETELY OPTIONAL and requires:
     - S3_ENABLED=true in .env
     - AWS credentials configured
-    - Explicit user action
+    - Explicit user action to trigger
+
+    By default, S3 is disabled and no data is sent to cloud.
 
     Args:
         thought_ids: List of thought IDs to export (None = export all)
@@ -167,17 +169,38 @@ async def export_to_s3(thought_ids: Optional[List[int]] = None):
     Returns:
         Export status and S3 location
     """
+    from app.db.database import Database
     from app.utils.config import Config
+    from app.services.s3_export import S3Exporter
 
     if not Config.S3_ENABLED:
         raise HTTPException(
             status_code=403,
-            detail="S3 export is disabled. Enable via S3_ENABLED=true in .env",
+            detail="S3 export is disabled. To enable: set S3_ENABLED=true and provide AWS credentials in .env",
         )
 
-    # S3 export logic will be implemented later
-    return {
-        "status": "export_queued",
-        "count": len(thought_ids) if thought_ids else "all",
-        "bucket": Config.S3_BUCKET_NAME,
-    }
+    db = Database(Config.DB_PATH)
+    exporter = S3Exporter(Config)
+
+    if not exporter.is_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail="S3 export configured but not available. Check AWS credentials.",
+        )
+
+    # Fetch thoughts to export
+    if thought_ids:
+        thoughts = [
+            dict(db.get_thought(tid)) for tid in thought_ids
+            if db.get_thought(tid)
+        ]
+    else:
+        thoughts = db.get_all_thoughts(limit=10000)
+
+    # Export to S3
+    result = exporter.export_thoughts(thoughts)
+
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+
+    return result
