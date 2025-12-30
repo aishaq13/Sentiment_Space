@@ -11,6 +11,7 @@ Privacy-first architecture:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import logging
 import os
 
@@ -50,6 +51,21 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(api_router)
+
+# Serve dashboard at root
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+index_file = os.path.join(static_dir, "index.html")
+logger.info(f"Dashboard: static_dir={static_dir}, exists={os.path.exists(static_dir)}")
+logger.info(f"Dashboard: index_file={index_file}, exists={os.path.exists(index_file)}")
+
+@app.get("/")
+async def root():
+    """Serve the dashboard."""
+    if os.path.exists(index_file):
+        logger.info("Serving index.html")
+        return FileResponse(index_file, media_type="text/html")
+    logger.warning(f"index.html not found at {index_file}")
+    return {"message": "Sentiment Space API"}
 
 
 @app.on_event("startup")
