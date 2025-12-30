@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - FASTAPI_ENV=development
+      - FASTAPI_DEBUG=true
+      - DB_PATH=/app/data/sentiment.db
+      - LLM_DEVICE=cpu
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - sentiment-space
+
+networks:
+  sentiment-space:
+    driver: bridge
+
+volumes:
+  data:
