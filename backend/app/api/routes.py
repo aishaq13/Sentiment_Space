@@ -64,10 +64,9 @@ async def analyze_thought(request: ThoughtRequest):
     Analyze a thought for sentiment and generate summary.
 
     This endpoint:
-    1. Stores the raw text in local SQLite
-    2. Runs local Llama 3 for summarization
-    3. Runs sentiment classification
-    4. Returns results immediately (no cloud calls)
+    1. Runs local Llama 3 for summarization + sentiment
+    2. Stores results in local SQLite
+    3. Returns immediately (no cloud calls, ~2-5s for CPU inference)
 
     Args:
         request: ThoughtRequest with raw_text
@@ -77,13 +76,34 @@ async def analyze_thought(request: ThoughtRequest):
     """
     from app.db.database import Database
     from app.utils.config import Config
+    from app.llm.llama_loader import LlamaLoader
+    from app.llm.langchain_pipeline import SentimentAnalysisPipeline
 
+    # Initialize components
     db = Database(Config.DB_PATH)
+    llama_loader = LlamaLoader(
+        model_name=Config.LLM_MODEL_NAME,
+        quantization=Config.LLM_QUANTIZATION,
+        device=Config.LLM_DEVICE,
+    )
 
-    # For now, store the thought
-    thought_id = db.insert_thought(raw_text=request.raw_text)
+    # Load model if not already loaded
+    if not llama_loader.is_available():
+        llama_loader.load()
 
-    # LLM inference will be added in next steps
+    # Run analysis pipeline
+    pipeline = SentimentAnalysisPipeline(llama_loader)
+    analysis = pipeline.analyze(request.raw_text)
+
+    # Store in database
+    thought_id = db.insert_thought(
+        raw_text=request.raw_text,
+        summary=analysis["summary"],
+        sentiment=analysis["sentiment"],
+        confidence=analysis["confidence"],
+    )
+
+    # Return result
     thought = db.get_thought(thought_id)
 
     return ThoughtResponse(
