@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv
+venv/
+ENV/
+env/
+
+# Virtual environments
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Swift/Xcode
+build/
+xcbuild.log
+*.xcworkspace
+Pods/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Core ML
+*.mlmodel
+*.mlpackage
+
+# SQLite
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Models
+models/llama*
+models/*.bin
+models/*.safetensors
+models/cache/
+
+# Docker
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# S3/AWS
+.aws/
+aws_credentials.json
+
+# OS
+Thumbs.db
+.DS_Store
